@@ -8,7 +8,7 @@ from exp.exp_short_term_forecasting import Exp_Short_Term_Forecast
 from exp.exp_anomaly_detection import Exp_Anomaly_Detection
 from exp.exp_classification import Exp_Classification
 from exp.exp_zero_shot_forecasting import Exp_Zero_Shot_Forecast
-from utils.print_args import print_args
+from tslib.utils.print_args import print_args
 import random
 import numpy as np
 

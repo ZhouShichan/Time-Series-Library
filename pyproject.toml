@@ -1,0 +1,16 @@
+[project]
+
+dependencies = []
+description = "Add your description here"
+name = "tslib"
+readme = "README.md"
+requires-python = ">=3.12"
+version = "0.1.0"
+
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build>=0.9.2,<0.10.0"]
+
+[tool.setuptools]
+# 这里的 key 是你代码里 import 的名字，value 是文件夹路径
+package-dir = {"" = "src"}
