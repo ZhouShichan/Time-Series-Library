@@ -2,11 +2,21 @@
 from . import Autoformer, Transformer, TimesNet, Nonstationary_Transformer
 from . import DLinear, FEDformer, Informer, LightTS, Reformer, ETSformer
 from . import Pyraformer, PatchTST, MICN, Crossformer, FiLM, iTransformer
-from . import Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN
+from . import TiDE, FreTS, TimeMixer, TSMixer, SegRNN
 from . import TemporalFusionTransformer, SCINet, PAttn, TimeXer
-from . import WPMixer, MultiPatchFormer, KANAD, MSGNet, TimeFilter
+from . import MultiPatchFormer, KANAD, MSGNet, TimeFilter
 
 # Optional models - gracefully skip if dependencies are missing
+try:
+    from . import Koopa
+except ImportError:
+    Koopa = None
+    
+try:
+    from . import WPMixer
+except ImportError:
+    WPMixer = None
+    
 try:
     from . import Mamba
     MambaSimple = Mamba
