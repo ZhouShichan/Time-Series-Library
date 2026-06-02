@@ -1,11 +1,13 @@
 import importlib
 import os
+from pathlib import Path
 
 import torch
 
 # Just put your model files under models/ folder
 # e.g., models/Transformer.py, models/LSTM.py, etc.
 # All models will be automatically detected and can be used by specifying their names.
+
 
 class Exp_Basic:
     def __init__(self, args):
@@ -27,18 +29,20 @@ class Exp_Basic:
         Automatically scan all .py files in the models folder
         """
         model_map = {}
-        models_dir = 'models'
+        lib_dir = Path(__file__).parent.parent
+        models_dir = lib_dir / "models"
+        model_module_dir = ".".join(["tslib"] + list(models_dir.relative_to(lib_dir).parts))
 
         # Iterate through all files in 'models' directory
         if os.path.exists(models_dir):
             for filename in os.listdir(models_dir):
                 # Ignore __init__.py and non-.py files
-                if filename.endswith('.py') and filename != '__init__.py':
+                if filename.endswith(".py") and filename != "__init__.py":
                     # Remove .py extension to get module name
                     module_name = filename[:-3]
 
                     # Build full import path
-                    full_path = f"{models_dir}.{module_name}"
+                    full_path = f"{model_module_dir}.{module_name}"
 
                     # loading dict: {'Transformer': 'models.Transformer'}
                     model_map[module_name] = full_path
@@ -50,17 +54,18 @@ class Exp_Basic:
         return None
 
     def _acquire_device(self):
-        if self.args.use_gpu and self.args.gpu_type == 'cuda':
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(
-                self.args.gpu) if not self.args.use_multi_gpu else self.args.devices
-            device = torch.device(f'cuda:{self.args.gpu}')
-            print(f'Use GPU: cuda:{self.args.gpu}')
-        elif self.args.use_gpu and self.args.gpu_type == 'mps':
-            device = torch.device('mps')
-            print('Use GPU: mps')
+        if self.args.use_gpu and self.args.gpu_type == "cuda":
+            os.environ["CUDA_VISIBLE_DEVICES"] = (
+                str(self.args.gpu) if not self.args.use_multi_gpu else self.args.devices
+            )
+            device = torch.device(f"cuda:{self.args.gpu}")
+            print(f"Use GPU: cuda:{self.args.gpu}")
+        elif self.args.use_gpu and self.args.gpu_type == "mps":
+            device = torch.device("mps")
+            print("Use GPU: mps")
         else:
-            device = torch.device('cpu')
-            print('Use CPU')
+            device = torch.device("cpu")
+            print("Use CPU")
         return device
 
     def _get_data(self):
@@ -80,6 +85,7 @@ class LazyModelDict(dict):
     """
     Smart Lazy-Loading Dictionary
     """
+
     def __init__(self, model_map):
         self.model_map = model_map
         super().__init__()
@@ -100,13 +106,14 @@ class LazyModelDict(dict):
             raise e
 
         # Try to find the model class
-        if hasattr(module, 'Model'):
+        if hasattr(module, "Model"):
             model_class = module.Model
         elif hasattr(module, key):
             model_class = getattr(module, key)
         else:
-            raise AttributeError(f"Module {module_path} has no class 'Model' or '{key}'")
+            raise AttributeError(
+                f"Module {module_path} has no class 'Model' or '{key}'"
+            )
 
         self[key] = model_class
         return model_class
-
