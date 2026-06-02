@@ -30,6 +30,9 @@ dependencies = [
 requires = ["uv_build>=0.10.9,<0.11.0"]
 build-backend = "uv_build"
 
+[tool.uv.build-backend]
+module-name = "tslib"
+
 [dependency-groups]
 dev = [
     "pytest<8.0.0,>=7.4.3",
@@ -57,6 +60,15 @@ cu118 = ["torch==2.5.1", "torchvision==0.20.1", "torchaudio==2.5.1"]
 cu121 = ["torch==2.5.1", "torchvision==0.20.1", "torchaudio==2.5.1"]
 cu124 = ["torch==2.5.1", "torchvision==0.20.1", "torchaudio==2.5.1"]
 
+[tool.uv]
+conflicts = [
+    [
+        { extra = "cpu" },
+        { extra = "cu118" },
+        { extra = "cu121" },
+        { extra = "cu124" },
+    ],
+]
 
 [tool.uv.sources]
 torch = [
