@@ -2,6 +2,7 @@ import os
 import time
 import warnings
 
+from loguru import logger
 import numpy as np
 import pandas
 import torch
@@ -100,24 +101,24 @@ class Exp_Short_Term_Forecast(Exp_Basic):
                 train_loss.append(loss.item())
 
                 if (i + 1) % 100 == 0:
-                    print(f"\titers: {i + 1}, epoch: {epoch + 1} | loss: {loss.item():.7f}")
+                    logger.info("\titers: {}, epoch: {} | loss: {:.7f}", i + 1, epoch + 1, loss.item())
                     speed = (time.time() - time_now) / iter_count
                     left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
-                    print(f'\tspeed: {speed:.4f}s/iter; left time: {left_time:.4f}s')
+                    logger.info('\tspeed: {:.4f}s/iter; left time: {:.4f}s', speed, left_time)
                     iter_count = 0
                     time_now = time.time()
 
                 loss.backward()
                 model_optim.step()
 
-            print(f"Epoch: {epoch + 1} cost time: {time.time() - epoch_time}")
+            logger.info("Epoch: {} cost time: {}", epoch + 1, time.time() - epoch_time)
             train_loss = np.average(train_loss)
             vali_loss = self.vali(train_loader, vali_loader, criterion)
             test_loss = vali_loss
-            print(f"Epoch: {epoch + 1}, Steps: {train_steps} | Train Loss: {train_loss:.7f} Vali Loss: {vali_loss:.7f} Test Loss: {test_loss:.7f}")
+            logger.info("Epoch: {}, Steps: {} | Train Loss: {:.7f} Vali Loss: {:.7f} Test Loss: {:.7f}", epoch + 1, train_steps, train_loss, vali_loss, test_loss)
             early_stopping(vali_loss, self.model, path)
             if early_stopping.early_stop:
-                print("Early stopping")
+                logger.info("Early stopping")
                 break
 
             adjust_learning_rate(model_optim, epoch + 1, self.args)
@@ -167,7 +168,7 @@ class Exp_Short_Term_Forecast(Exp_Basic):
         x = x.unsqueeze(-1)
 
         if test:
-            print('loading model')
+            logger.info('loading model')
             self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
 
         folder_path = './test_results/' + setting + '/'
@@ -188,7 +189,7 @@ class Exp_Short_Term_Forecast(Exp_Basic):
                                                                       dec_inp[id_list[i]:id_list[i + 1]], None)
 
                 if id_list[i] % 1000 == 0:
-                    print(id_list[i])
+                    logger.info(id_list[i])
 
             f_dim = -1 if self.args.features == 'MS' else 0
             outputs = outputs[:, -self.args.pred_len:, f_dim:]
@@ -203,7 +204,7 @@ class Exp_Short_Term_Forecast(Exp_Basic):
                 pd = np.concatenate((x[i, :, 0], preds[i, :, 0]), axis=0)
                 visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
 
-        print('test shape:', preds.shape)
+        logger.info('test shape: {}', preds.shape)
 
         # result save
         folder_path = './m4_results/' + self.args.model + '/'
@@ -216,7 +217,7 @@ class Exp_Short_Term_Forecast(Exp_Basic):
         forecasts_df.set_index(forecasts_df.columns[0], inplace=True)
         forecasts_df.to_csv(folder_path + self.args.seasonal_patterns + '_forecast.csv')
 
-        print(self.args.model)
+        logger.info(self.args.model)
         file_path = './m4_results/' + self.args.model + '/'
         if 'Weekly_forecast.csv' in os.listdir(file_path) \
                 and 'Monthly_forecast.csv' in os.listdir(file_path) \
@@ -227,10 +228,10 @@ class Exp_Short_Term_Forecast(Exp_Basic):
             m4_summary = M4Summary(file_path, self.args.root_path)
             # m4_forecast.set_index(m4_winner_forecast.columns[0], inplace=True)
             smape_results, owa_results, mape, mase = m4_summary.evaluate()
-            print('smape:', smape_results)
-            print('mape:', mape)
-            print('mase:', mase)
-            print('owa:', owa_results)
+            logger.info('smape: {}', smape_results)
+            logger.info('mape: {}', mape)
+            logger.info('mase: {}', mase)
+            logger.info('owa: {}', owa_results)
         else:
-            print('After all 6 tasks are finished, you can calculate the averaged index')
+            logger.info('After all 6 tasks are finished, you can calculate the averaged index')
         return

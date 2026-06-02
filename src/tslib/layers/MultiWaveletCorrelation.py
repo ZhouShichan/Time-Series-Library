@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from loguru import logger
 from scipy.special import eval_legendre
 from sympy import Poly, Symbol, chebyshevt, legendre
 from torch import Tensor
@@ -203,7 +204,7 @@ class MultiWaveletTransform(nn.Module):
     def __init__(self, ich=1, k=8, alpha=16, c=128,
                  nCZ=1, L=0, base='legendre', attention_dropout=0.1):
         super().__init__()
-        print('base', base)
+        logger.info('base: {}'.format(base))
         self.k = k
         self.c = c
         self.L = L
@@ -249,7 +250,7 @@ class MultiWaveletCross(nn.Module):
                  initializer=None, activation='tanh',
                  **kwargs):
         super().__init__()
-        print('base', base)
+        logger.info('base {}', base)
 
         self.c = c
         self.k = k
@@ -339,7 +340,7 @@ class MultiWaveletCross(nn.Module):
 
         # decompose
         for i in range(ns - self.L):
-            # print('q shape',q.shape)
+            # logger.info('q shape {}', q.shape)
             d, q = self.wavelet_transform(q)
             Ud_q += [tuple([d, q])]
             Us_q += [d]
@@ -392,7 +393,7 @@ class FourierCrossAttentionW(nn.Module):
     def __init__(self, in_channels, out_channels, seq_len_q, seq_len_kv, modes=16, activation='tanh',
                  mode_select_method='random'):
         super().__init__()
-        print('corss fourier correlation used!')
+        logger.info('corss fourier correlation used!')
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.modes1 = modes

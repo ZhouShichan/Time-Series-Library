@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 from datasets import load_dataset
 from huggingface_hub import hf_hub_download
+from loguru import logger
 from sklearn.preprocessing import StandardScaler
 from sktime.datasets import load_from_tsfile_to_dataframe
 from torch.utils.data import Dataset
@@ -444,8 +445,8 @@ class PSMSegLoader(Dataset):
         data_len = len(self.train)
         self.val = self.train[(int)(data_len * 0.8):]
         self.test_labels = test_label_df.values[:, 1:]
-        print("test:", self.test.shape)
-        print("train:", self.train.shape)
+        logger.info("test: {}", self.test.shape)
+        logger.info("train: {}", self.train.shape)
 
     def __len__(self):
         if self.flag == "train":
@@ -507,8 +508,8 @@ class MSLSegLoader(Dataset):
         data_len = len(self.train)
         self.val = self.train[int(data_len * 0.8):]
 
-        print("test:", self.test.shape)
-        print("train:", self.train.shape)
+        logger.info("test: {}", self.test.shape)
+        logger.info("train: {}", self.train.shape)
 
     def __len__(self):
         if self.flag == "train":
@@ -571,8 +572,8 @@ class SMAPSegLoader(Dataset):
         data_len = len(self.train)
         self.val = self.train[int(data_len * 0.8):]
 
-        print("test:", self.test.shape)
-        print("train:", self.train.shape)
+        logger.info("test: {}", self.test.shape)
+        logger.info("train: {}", self.train.shape)
 
     def __len__(self):
 
@@ -632,8 +633,8 @@ class SMDSegLoader(Dataset):
         data_len = len(self.train)
         self.val = self.train[(int)(data_len * 0.8):]
         self.test_labels = test_label
-        print("test:", self.test.shape)
-        print("train:", self.train.shape)
+        logger.info("test: {}", self.test.shape)
+        logger.info("train: {}", self.train.shape)
 
     def __len__(self):
         if self.flag == "train":
@@ -688,8 +689,8 @@ class SWATSegLoader(Dataset):
         data_len = len(self.train)
         self.val = self.train[(int)(data_len * 0.8):]
         self.test_labels = labels
-        print("test:", self.test.shape)
-        print("train:", self.train.shape)
+        logger.info("test: {}", self.test.shape)
+        logger.info("train: {}", self.train.shape)
 
     def __len__(self):
         """
@@ -758,7 +759,7 @@ class UEAloader(Dataset):
         # pre_process
         normalizer = Normalizer()
         self.feature_df = normalizer.normalize(self.feature_df)
-        print(len(self.all_IDs))
+        logger.info(len(self.all_IDs))
 
     def _resolve_ts_path(self, root_path, dataset_name, flag):
         split = "TRAIN" if "train" in str(flag).lower() else "TEST"

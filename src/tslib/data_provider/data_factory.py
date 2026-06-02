@@ -1,3 +1,4 @@
+from loguru import logger
 from torch.utils.data import DataLoader
 
 from tslib.data_provider.data_loader import (
@@ -47,7 +48,7 @@ def data_provider(args, flag):
             win_size=args.seq_len,
             flag=flag,
         )
-        print(flag, len(data_set))
+        logger.info("Dataset[{}] has {} samples".format(flag, len(data_set)))
         data_loader = DataLoader(
             data_set,
             batch_size=batch_size,
@@ -87,7 +88,7 @@ def data_provider(args, flag):
             freq=freq,
             seasonal_patterns=args.seasonal_patterns
         )
-        print(flag, len(data_set))
+        logger.info("Dataset[{}] has {} samples".format(flag, len(data_set)))
         data_loader = DataLoader(
             data_set,
             batch_size=batch_size,

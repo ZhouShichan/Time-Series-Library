@@ -4,8 +4,11 @@ import random
 import numpy as np
 import torch
 import torch.backends
+from loguru import logger
 
-from tslib.utils.print_args import print_args
+from tslib.utils.logger import configure_logging
+from tslib.utils.print_args import format_args
+
 
 def main():
     fix_seed = 2021
@@ -156,17 +159,24 @@ def main():
     parser.add_argument('--alpha', type=float, default=0.1, help='KNN for Graph Construction')
     parser.add_argument('--top_p', type=float, default=0.5, help='Dynamic Routing in MoE')
     parser.add_argument('--pos', type=int, choices=[0, 1], default=1, help='Positional Embedding. Set pos to 0 or 1')
+    
+    # log
+    parser.add_argument('--log_level', type=str, default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                        help='logging level')
 
     args = parser.parse_args()
+    
+    configure_logging(args.log_level)
+    
     if torch.cuda.is_available() and args.use_gpu:
         args.device = torch.device(f'cuda:{args.gpu}')
-        print('Using GPU')
+        logger.info('Using GPU')
     else:
         if hasattr(torch.backends, "mps"):
             args.device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
         else:
             args.device = torch.device("cpu")
-        print('Using cpu or mps')
+        logger.info('Using cpu or mps')
 
     if args.use_gpu and args.use_multi_gpu:
         args.devices = args.devices.replace(' ', '')
@@ -174,9 +184,7 @@ def main():
         args.device_ids = [int(id_) for id_ in device_ids]
         args.gpu = args.device_ids[0]
 
-    print('Args in experiment:')
-    print_args(args)
-
+    logger.info("Args in experiment:\n{}", format_args(args))
 
     if args.task_name == 'long_term_forecast':
         from tslib.exp.exp_long_term_forecasting import Exp_Long_Term_Forecast
@@ -212,11 +220,11 @@ def main():
                         + f'_sl{args.seq_len}_ll{args.label_len}_pl{args.pred_len}_dm{args.d_model}_ds{args.d_ff}' \
                         + f'_expand{args.expand}_dc{args.d_conv}_nk{args.num_kernels}' \
                         + f'_tvdt{int(args.tv_dt)}_tvB{int(args.tv_B)}_tvC{int(args.tv_C)}_useD{int(args.use_D)}_{args.des}_{ii}'
-
-            print(f'>>>>>>>start training : {setting}>>>>>>>>>>>>>>>>>>>>>>>>>>')
+            logger.add(f'./logs/{setting}.log', level=args.log_level)
+            logger.info('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>', setting)
             exp.train(setting)
 
-            print(f'>>>>>>>testing : {setting}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+            logger.info('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', setting)
             exp.test(setting)
             if args.use_gpu:
                 if args.gpu_type == 'mps':
@@ -235,7 +243,8 @@ def main():
                     + f'_expand{args.expand}_dc{args.d_conv}_nk{args.num_kernels}' \
                     + f'_tvdt{args.tv_dt}_tvB{args.tv_B}_tvC{args.tv_C}_useD{int(args.use_D)}_{args.des}_{ii}'
 
-        print(f'>>>>>>>testing : {setting}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+        logger.add(f'./logs/{setting}.log', level=args.log_level)
+        logger.info('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', setting)
         exp.test(setting, test=1)
         if args.use_gpu:
             if args.gpu_type == 'mps':
