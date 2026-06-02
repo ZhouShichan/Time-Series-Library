@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import torch
 import torch.nn as nn
+from loguru import logger
 from torch import optim
 
 from tslib.data_provider.data_factory import data_provider
@@ -132,10 +133,10 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                     train_loss.append(loss.item())
 
                 if (i + 1) % 100 == 0:
-                    print(f"\titers: {i + 1}, epoch: {epoch + 1} | loss: {loss.item():.7f}")
+                    logger.info("\titers: {}, epoch: {} | loss: {:.7f}", i + 1, epoch + 1, loss.item())
                     speed = (time.time() - time_now) / iter_count
                     left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
-                    print(f'\tspeed: {speed:.4f}s/iter; left time: {left_time:.4f}s')
+                    logger.info('\tspeed: {:.4f}s/iter; left time: {:.4f}s', speed, left_time)
                     iter_count = 0
                     time_now = time.time()
 
@@ -147,15 +148,15 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                     loss.backward()
                     model_optim.step()
 
-            print(f"Epoch: {epoch + 1} cost time: {time.time() - epoch_time}")
+            logger.info("Epoch: {} cost time: {}", epoch + 1, time.time() - epoch_time)
             train_loss = np.average(train_loss)
             vali_loss = self.vali(vali_data, vali_loader, criterion)
             test_loss = self.vali(test_data, test_loader, criterion)
 
-            print(f"Epoch: {epoch + 1}, Steps: {train_steps} | Train Loss: {train_loss:.7f} Vali Loss: {vali_loss:.7f} Test Loss: {test_loss:.7f}")
+            logger.info("Epoch: {}, Steps: {} | Train Loss: {:.7f} Vali Loss: {:.7f} Test Loss: {:.7f}", epoch + 1, train_steps, train_loss, vali_loss, test_loss)
             early_stopping(vali_loss, self.model, path)
             if early_stopping.early_stop:
-                print("Early stopping")
+                logger.info("Early stopping")
                 break
 
             adjust_learning_rate(model_optim, epoch + 1, self.args)
@@ -168,7 +169,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
     def test(self, setting, test=0):
         test_data, test_loader = self._get_data(flag='test')
         if test:
-            print('loading model')
+            logger.info('loading model')
             self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
 
         preds = []
@@ -227,10 +228,10 @@ class Exp_Long_Term_Forecast(Exp_Basic):
 
         preds = np.concatenate(preds, axis=0)
         trues = np.concatenate(trues, axis=0)
-        print('test shape:', preds.shape, trues.shape)
+        logger.info('test shape: {} {}', preds.shape, trues.shape)
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
         trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-        print('test shape:', preds.shape, trues.shape)
+        logger.info('test shape: {} {}', preds.shape, trues.shape)
 
         # result save
         folder_path = './results/' + setting + '/'
@@ -245,7 +246,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 x = preds[i].reshape(-1, 1)
                 y = trues[i].reshape(-1, 1)
                 if i % 100 == 0:
-                    print("calculating dtw iter:", i)
+                    logger.info("calculating dtw iter:", i)
                 d, _, _, _ = accelerated_dtw(x, y, dist=manhattan_distance)
                 dtw_list.append(d)
             dtw = np.array(dtw_list).mean()
@@ -253,7 +254,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
             dtw = 'Not calculated'
 
         mae, mse, rmse, mape, mspe = metric(preds, trues)
-        print(f'mse:{mse}, mae:{mae}, dtw:{dtw}')
+        logger.info('mse:{}, mae:{}, dtw:{}', mse, mae, dtw)
         f = open("result_long_term_forecast.txt", 'a')
         f.write(setting + "  \n")
         f.write(f'mse:{mse}, mae:{mae}, dtw:{dtw}')

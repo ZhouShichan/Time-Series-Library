@@ -6,6 +6,7 @@ from tslib.exp.exp_basic import Exp_Basic
 from tslib.utils.tools import EarlyStopping, adjust_learning_rate, adjustment
 
 torch.multiprocessing.set_sharing_strategy('file_system')
+
 import os
 import time
 import warnings
@@ -13,6 +14,7 @@ import warnings
 import numpy as np
 import torch
 import torch.nn as nn
+from loguru import logger
 from torch import optim
 
 warnings.filterwarnings('ignore')
@@ -98,25 +100,25 @@ class Exp_Anomaly_Detection(Exp_Basic):
                 train_loss.append(loss.item())
 
                 if (i + 1) % 100 == 0:
-                    print(f"\titers: {i + 1}, epoch: {epoch + 1} | loss: {loss.item():.7f}")
+                    logger.info("\titers: {}, epoch: {} | loss: {:.7f}", i + 1, epoch + 1, loss.item())
                     speed = (time.time() - time_now) / iter_count
                     left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
-                    print(f'\tspeed: {speed:.4f}s/iter; left time: {left_time:.4f}s')
+                    logger.info('\tspeed: {:.4f}s/iter; left time: {:.4f}s', speed, left_time)
                     iter_count = 0
                     time_now = time.time()
 
                 loss.backward()
                 model_optim.step()
 
-            print(f"Epoch: {epoch + 1} cost time: {time.time() - epoch_time}")
+            logger.info("Epoch: {} cost time: {}", epoch + 1, time.time() - epoch_time)
             train_loss = np.average(train_loss)
             vali_loss = self.vali(vali_data, vali_loader, criterion)
             test_loss = self.vali(test_data, test_loader, criterion)
 
-            print(f"Epoch: {epoch + 1}, Steps: {train_steps} | Train Loss: {train_loss:.7f} Vali Loss: {vali_loss:.7f} Test Loss: {test_loss:.7f}")
+            logger.info("Epoch: {}, Steps: {} | Train Loss: {:.7f} Vali Loss: {:.7f} Test Loss: {:.7f}", epoch + 1, train_steps, train_loss, vali_loss, test_loss)
             early_stopping(vali_loss, self.model, path)
             if early_stopping.early_stop:
-                print("Early stopping")
+                logger.info("Early stopping")
                 break
             adjust_learning_rate(model_optim, epoch + 1, self.args)
 
@@ -129,7 +131,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
         test_data, test_loader = self._get_data(flag='test')
         train_data, train_loader = self._get_data(flag='train')
         if test:
-            print('loading model')
+            logger.info('loading model')
             self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
 
         attens_energy = []
@@ -171,7 +173,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
         test_energy = np.array(attens_energy)
         combined_energy = np.concatenate([train_energy, test_energy], axis=0)
         threshold = np.percentile(combined_energy, 100 - self.args.anomaly_ratio)
-        print("Threshold :", threshold)
+        logger.info("Threshold :", threshold)
 
         # (3) evaluation on the test set
         pred = (test_energy > threshold).astype(int)
@@ -179,20 +181,20 @@ class Exp_Anomaly_Detection(Exp_Basic):
         test_labels = np.array(test_labels)
         gt = test_labels.astype(int)
 
-        print("pred:   ", pred.shape)
-        print("gt:     ", gt.shape)
+        logger.info("pred:   ", pred.shape)
+        logger.info("gt:     ", gt.shape)
 
         # (4) detection adjustment
         gt, pred = adjustment(gt, pred)
 
         pred = np.array(pred)
         gt = np.array(gt)
-        print("pred: ", pred.shape)
-        print("gt:   ", gt.shape)
+        logger.info("pred: ", pred.shape)
+        logger.info("gt:   ", gt.shape)
 
         accuracy = accuracy_score(gt, pred)
         precision, recall, f_score, support = precision_recall_fscore_support(gt, pred, average='binary')
-        print(f"Accuracy : {accuracy:0.4f}, Precision : {precision:0.4f}, Recall : {recall:0.4f}, F-score : {f_score:0.4f} ")
+        logger.info("Accuracy : {:0.4f}, Precision : {:0.4f}, Recall : {:0.4f}, F-score : {:0.4f} ", accuracy, precision, recall, f_score)
 
         f = open("result_anomaly_detection.txt", 'a')
         f.write(setting + "  \n")

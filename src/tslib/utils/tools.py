@@ -4,6 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from loguru import logger
 
 plt.switch_backend('agg')
 
@@ -25,7 +26,7 @@ def adjust_learning_rate(optimizer, epoch, args):
         lr = lr_adjust[epoch]
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
-        print(f'Updating learning rate to {lr}')
+        logger.info('Updating learning rate to {}', lr)
 
 
 class EarlyStopping:
@@ -45,7 +46,7 @@ class EarlyStopping:
             self.save_checkpoint(val_loss, model, path)
         elif score < self.best_score + self.delta:
             self.counter += 1
-            print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            logger.info('EarlyStopping counter: {} out of {}', self.counter, self.patience)
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
@@ -55,7 +56,7 @@ class EarlyStopping:
 
     def save_checkpoint(self, val_loss, model, path):
         if self.verbose:
-            print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+            logger.info('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...', self.val_loss_min, val_loss)
         torch.save(model.state_dict(), path + '/' + 'checkpoint.pth')
         self.val_loss_min = val_loss
 

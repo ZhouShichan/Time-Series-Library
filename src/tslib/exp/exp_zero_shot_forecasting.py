@@ -1,6 +1,7 @@
 import os
 import warnings
 
+from loguru import logger
 import numpy as np
 import torch
 import torch.nn as nn
@@ -66,7 +67,7 @@ class Exp_Zero_Shot_Forecast(Exp_Basic):
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
                     outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                # print("Test cost time: {}".format(time.time() - start_time))
+                # logger.info("Test cost time: {}".format(time.time() - start_time))
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, :]
                 batch_y = batch_y[:, -self.args.pred_len:, :].to(self.device)
@@ -98,10 +99,10 @@ class Exp_Zero_Shot_Forecast(Exp_Basic):
 
         preds = np.concatenate(preds, axis=0)
         trues = np.concatenate(trues, axis=0)
-        print('test shape:', preds.shape, trues.shape)
+        logger.info('test shape: {} {}'.format(preds.shape, trues.shape))
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
         trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-        print('test shape:', preds.shape, trues.shape)
+        logger.info('test shape: {} {}'.format(preds.shape, trues.shape))
 
         # result save
         folder_path = './results/' + setting + '/'
@@ -116,7 +117,7 @@ class Exp_Zero_Shot_Forecast(Exp_Basic):
                 x = preds[i].reshape(-1, 1)
                 y = trues[i].reshape(-1, 1)
                 if i % 100 == 0:
-                    print("calculating dtw iter:", i)
+                    logger.info("calculating dtw iter:", i)
                 d, _, _, _ = accelerated_dtw(x, y, dist=manhattan_distance)
                 dtw_list.append(d)
             dtw = np.array(dtw_list).mean()
@@ -124,7 +125,7 @@ class Exp_Zero_Shot_Forecast(Exp_Basic):
             dtw = 'Not calculated'
 
         mae, mse, rmse, mape, mspe = metric(preds, trues)
-        print(f'mse:{mse}, mae:{mae}, dtw:{dtw}')
+        logger.info('mse:{}, mae:{}, dtw:{}', mse, mae, dtw)
         f = open("result_zero_shot_forecast_search.txt", 'a')
         f.write(setting + "  \n")
         f.write(f'mse:{mse}, mae:{mae}, dtw:{dtw}')

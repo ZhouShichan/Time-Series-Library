@@ -162,7 +162,7 @@ class Model(nn.Module):
         # porject back
         dec_out = self.projection(enc_out)
         # dec_out = self.seq2pred(dec_out.transpose(1, 2)).transpose(1, 2)
-        # print(dec_out.shape)
+        # logger.info(dec_out.shape)
         # De-Normalization from Non-stationary Transformer
         dec_out = dec_out * \
                   (stdev[:, 0, :].unsqueeze(1).repeat(
@@ -192,7 +192,7 @@ class Model(nn.Module):
         # porject back
         dec_out = self.projection(enc_out)
         # dec_out = self.seq2pred(dec_out.transpose(1, 2)).transpose(1, 2)
-        # print(dec_out.shape)
+        # logger.info(dec_out.shape)
         # De-Normalization from Non-stationary Transformer
         dec_out = dec_out * \
                   (stdev[:, 0, :].unsqueeze(1).repeat(

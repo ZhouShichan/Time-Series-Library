@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import torch
 import torch.nn as nn
+from loguru import logger
 from torch import optim
 
 from tslib.data_provider.data_factory import data_provider
@@ -114,10 +115,10 @@ class Exp_Classification(Exp_Basic):
                 train_loss.append(loss.item())
 
                 if (i + 1) % 100 == 0:
-                    print(f"\titers: {i + 1}, epoch: {epoch + 1} | loss: {loss.item():.7f}")
+                    logger.info("\titers: {}, epoch: {} | loss: {:.7f}", i + 1, epoch + 1, loss.item())
                     speed = (time.time() - time_now) / iter_count
                     left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
-                    print(f'\tspeed: {speed:.4f}s/iter; left time: {left_time:.4f}s')
+                    logger.info('\tspeed: {:.4f}s/iter; left time: {:.4f}s', speed, left_time)
                     iter_count = 0
                     time_now = time.time()
 
@@ -125,17 +126,17 @@ class Exp_Classification(Exp_Basic):
                 nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=4.0)
                 model_optim.step()
 
-            print(f"Epoch: {epoch + 1} cost time: {time.time() - epoch_time}")
+            logger.info("Epoch: {} cost time: {}", epoch + 1, time.time() - epoch_time)
             train_loss = np.average(train_loss)
             vali_loss, val_accuracy = self.vali(vali_data, vali_loader, criterion)
             test_loss, test_accuracy = self.vali(test_data, test_loader, criterion)
 
-            print(
-                f"Epoch: {epoch + 1}, Steps: {train_steps} | Train Loss: {train_loss:.3f} Vali Loss: {vali_loss:.3f} Vali Acc: {val_accuracy:.3f} Test Loss: {test_loss:.3f} Test Acc: {test_accuracy:.3f}"
+            logger.info(
+                "Epoch: {}, Steps: {} | Train Loss: {:.3f} Vali Loss: {:.3f} Vali Acc: {:.3f} Test Loss: {:.3f} Test Acc: {:.3f}", epoch + 1, train_steps, train_loss, vali_loss, val_accuracy, test_loss, test_accuracy
                 )
             early_stopping(-val_accuracy, self.model, path)
             if early_stopping.early_stop:
-                print("Early stopping")
+                logger.info("Early stopping")
                 break
 
         best_model_path = path + '/' + 'checkpoint.pth'
@@ -146,7 +147,7 @@ class Exp_Classification(Exp_Basic):
     def test(self, setting, test=0):
         test_data, test_loader = self._get_data(flag='TEST')
         if test:
-            print('loading model')
+            logger.info('loading model')
             self.model.load_state_dict(torch.load(os.path.join(self.args.checkpoints, setting, 'checkpoint.pth')))
 
         preds = []
@@ -169,7 +170,7 @@ class Exp_Classification(Exp_Basic):
 
         preds = torch.cat(preds, 0)
         trues = torch.cat(trues, 0)
-        print('test shape:', preds.shape, trues.shape)
+        logger.info('test shape:', preds.shape, trues.shape)
 
         probs = torch.nn.functional.softmax(preds)  # (total_samples, num_classes) est. prob. for each class and sample
         predictions = torch.argmax(probs, dim=1).cpu().numpy()  # (total_samples,) int class index for each sample
@@ -181,7 +182,7 @@ class Exp_Classification(Exp_Basic):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        print(f'accuracy:{accuracy}')
+        logger.info('accuracy:{}', accuracy)
         file_name='result_classification.txt'
         f = open(os.path.join(folder_path,file_name), 'a')
         f.write(setting + "  \n")

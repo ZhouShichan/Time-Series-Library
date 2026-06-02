@@ -2,6 +2,7 @@ import importlib
 import os
 from pathlib import Path
 
+from loguru import logger
 import torch
 
 # Just put your model files under models/ folder
@@ -59,13 +60,13 @@ class Exp_Basic:
                 str(self.args.gpu) if not self.args.use_multi_gpu else self.args.devices
             )
             device = torch.device(f"cuda:{self.args.gpu}")
-            print(f"Use GPU: cuda:{self.args.gpu}")
+            logger.info("Use GPU: cuda:{}", self.args.gpu)
         elif self.args.use_gpu and self.args.gpu_type == "mps":
             device = torch.device("mps")
-            print("Use GPU: mps")
+            logger.info("Use GPU: mps")
         else:
             device = torch.device("cpu")
-            print("Use CPU")
+            logger.info("Use CPU")
         return device
 
     def _get_data(self):
@@ -99,10 +100,10 @@ class LazyModelDict(dict):
 
         module_path = self.model_map[key]
         try:
-            print(f"🚀 Lazy Loading: {key} ...")
+            logger.info("🚀 Lazy Loading: {} ...", key)
             module = importlib.import_module(module_path)
         except ImportError as e:
-            print(f"❌ Error: Failed to import model [{key}]. Dependencies missing?")
+            logger.info("❌ Error: Failed to import model [{}]. Dependencies missing?", key)
             raise e
 
         # Try to find the model class

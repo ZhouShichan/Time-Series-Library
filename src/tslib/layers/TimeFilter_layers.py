@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from loguru import logger
 
 
 class GCN(nn.Module):
@@ -29,7 +30,7 @@ def mask_topk_moe(adj, thre, n_vars, masks):
         N = L // n_vars
         device = adj.device
         dtype = torch.float32
-        print("Masks is None!")
+        logger.info("Masks is None!")
         masks = []
         for k in range(L):
             S = ((torch.arange(L) % N == k % N) & (torch.arange(L) != k)).to(dtype).to(device)
@@ -59,7 +60,7 @@ def mask_topk_area(adj, n_vars, masks, alpha=0.5):
     if masks is None:
         device = adj.device
         dtype = torch.float32
-        print("Masks is None!")
+        logger.info("Masks is None!")
         masks = []
         for k in range(L):
             S = ((torch.arange(L) % N == k % N) & (torch.arange(L) != k)).to(dtype).to(device)
@@ -170,7 +171,7 @@ class mask_moe(nn.Module):
         # [B, H, L, 3]
 
         if masks is None:
-            print("Masks is None!")
+            logger.info("Masks is None!")
             masks = []
             N = L // self.n_vars
             for k in range(L):
