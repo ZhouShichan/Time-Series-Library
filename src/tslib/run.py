@@ -7,7 +7,7 @@ import torch.backends
 
 from tslib.utils.print_args import print_args
 
-if __name__ == '__main__':
+def main():
     fix_seed = 2021
     random.seed(fix_seed)
     torch.manual_seed(fix_seed)
@@ -242,3 +242,7 @@ if __name__ == '__main__':
                 torch.backends.mps.empty_cache()
             elif args.gpu_type == 'cuda':
                 torch.cuda.empty_cache()
+
+
+if __name__ == '__main__':
+    main()

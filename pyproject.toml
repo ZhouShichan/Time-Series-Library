@@ -30,6 +30,9 @@ dependencies = [
 requires = ["uv_build>=0.10.9,<0.11.0"]
 build-backend = "uv_build"
 
+[project.scripts]
+tslib-run = "tslib.run:main"
+
 [tool.uv.build-backend]
 module-name = "tslib"
 
